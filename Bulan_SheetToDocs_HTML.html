@@ -1,0 +1,174 @@
+<!-- Bulan_SheetToDocs_HTML.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 20px;
+      background-color: #f5f5f5;
+      color: #3d3d3d;
+    }
+    h2 {
+      color: #e74b3c;
+      text-align: center;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      background-color: #e74b3c;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #c0392b;
+    }
+    .progress {
+      width: 100%;
+      background-color: #ddd;
+      border-radius: 10px;
+      margin: 15px 0;
+    }
+    .progress-bar {
+      width: 0%;
+      height: 20px;
+      background-color: #e74b3c;
+      border-radius: 10px;
+      text-align: center;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Bulan DMS</h2>
+
+<label>Sheet ID (Optional)</label>
+<input type="text" id="sheetLink" placeholder="Leave empty to use this file">
+
+<label>Sheet Name</label>
+<input type="text" id="sheetName">
+
+<label>Cell Range (A1:E20)</label>
+<input type="text" id="rangeA1">
+
+<label>Template Document ID</label>
+<input type="text" id="templateLink">
+
+<label>Folder ID (Destination)</label>
+<input type="text" id="folderLink">
+
+<label>Filename Format (e.g., Contract_{FirstName}_{LastName})</label>
+<input type="text" id="fileNameFormat">
+
+<button onclick="loadHeaders()">Load Fields</button>
+
+<div id="mappingSection" style="display:none;">
+  <h3>Field Mapping</h3>
+  <div id="mappingFields"></div>
+  <button onclick="startGeneration()">Start Generation</button>
+</div>
+
+<div class="progress">
+  <div id="progressBar" class="progress-bar">0%</div>
+</div>
+
+<div id="output"></div>
+
+<script>
+let templateFields = [];
+let sheetFields = [];
+
+function loadHeaders() {
+  const sheetLink = document.getElementById('sheetLink').value;
+  const sheetId = sheetLink ? extractIdFromUrl(sheetLink) : SpreadsheetApp.getActiveSpreadsheet().getId();
+  const sheetName = document.getElementById('sheetName').value;
+  const rangeA1 = document.getElementById('rangeA1').value;
+  const templateLink = document.getElementById('templateLink').value;
+  const templateId = extractIdFromUrl(templateLink);
+
+  google.script.run.withSuccessHandler(headers => {
+    sheetFields = headers;
+    google.script.run.withSuccessHandler(placeholders => {
+      templateFields = placeholders;
+      showMapping();
+    }).getTemplatePlaceholders(templateId);
+  }).getSheetHeaders(sheetName, rangeA1);
+}
+
+function showMapping() {
+  document.getElementById('mappingSection').style.display = 'block';
+  const div = document.getElementById('mappingFields');
+  div.innerHTML = '';
+  templateFields.forEach(field => {
+    const select = document.createElement('select');
+    select.id = `map_${field}`;
+    sheetFields.forEach(header => {
+      const option = document.createElement('option');
+      option.value = header;
+      option.textContent = header;
+      select.appendChild(option);
+    });
+    const label = document.createElement('label');
+    label.textContent = field;
+    div.appendChild(label);
+    div.appendChild(select);
+  });
+}
+
+function startGeneration() {
+  const settings = {
+    sheetId: document.getElementById('sheetLink').value ? extractIdFromUrl(document.getElementById('sheetLink').value) : SpreadsheetApp.getActiveSpreadsheet().getId(),
+    sheetName: document.getElementById('sheetName').value,
+    rangeA1: document.getElementById('rangeA1').value,
+    templateId: extractIdFromUrl(document.getElementById('templateLink').value),
+    folderId: extractIdFromUrl(document.getElementById('folderLink').value),
+    fileNameFormat: document.getElementById('fileNameFormat').value,
+    mapping: {}
+  };
+
+  templateFields.forEach(field => {
+    settings.mapping[field] = document.getElementById(`map_${field}`).value;
+  });
+
+  google.script.run.withSuccessHandler(count => {
+    document.getElementById('progressBar').style.width = '100%';
+    document.getElementById('progressBar').textContent = 'Completed!';
+    document.getElementById('output').innerHTML = `<b>Success!</b> ${count} documents generated.<br><a href="https://drive.google.com/drive/folders/${settings.folderId}" target="_blank">Go to Folder</a>`;
+  }).generateDocuments(settings);
+
+  simulateProgress();
+}
+
+function simulateProgress() {
+  let elem = document.getElementById("progressBar"); 
+  let width = 0;
+  const id = setInterval(frame, 200);
+  function frame() {
+    if (width >= 90) {
+      clearInterval(id);
+    } else {
+      width += 5; 
+      elem.style.width = width + '%'; 
+      elem.innerHTML = width + '%';
+    }
+  }
+}
+
+function extractIdFromUrl(url) {
+  const match = url.match(/[-\w]{25,}/);
+  return match ? match[0] : null;
+}
+</script>
+
+</body>
+</html>
+
