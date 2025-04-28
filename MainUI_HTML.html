@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #3d3d3d;
+        color: white;
+        padding: 20px;
+      }
+      button {
+        width: 100%;
+        padding: 10px;
+        margin-top: 10px;
+        font-size: 16px;
+        background-color: #e74b3c;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+      button:hover {
+        background-color: #ff665a;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Bulan DMS</h2>
+    <button onclick="runBulan_SheetToDocs_GS()">Run Bulan Sheet to Doc</button>
+    <button onclick="runBulan_AI_GS()">Run Bulan AI</button>
+
+    <script>
+      function runBulan_SheetToDocs_GS() {
+        google.script.run.runBulan_SheetToDocs_GS();
+      }
+
+      function runBulan_AI_GS() {
+        google.script.run.runBulan_AI_GS();
+      }
+    </script>
+  </body>
+</html>
